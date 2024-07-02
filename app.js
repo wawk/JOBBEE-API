@@ -1,4 +1,6 @@
 const express = require('express');
+const multer = require('multer');
+
 const app = express();
 
 const cookieParser = require('cookie-parser');
@@ -26,11 +28,15 @@ connectDatabase();
 //Setting up body parser
 app.use(express.json());
 
-// Set cookie parser
-app.use(cookieParser());
+
 
 // Handle file uploads
 app.use(fileUpload());
+
+// Set cookie parser
+app.use(cookieParser());
+
+
 
 
 // Importing all routes

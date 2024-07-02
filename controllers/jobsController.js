@@ -181,21 +181,46 @@ exports.applyJob = catchAsyncErrors( async(req, res, next) => {
     // Check if job last date has passed
     if(job.lastDate < new Date(Date.now())) {
         return next(new ErrorHandler('Job is no longer available due to past date to apply.', 400)); 
-
+        
+       
+    
     }
+
+    // Check if user has applied before
+    console.log(job.applicantsApplied);
+    
+    for (let i = 0; i < job.applicantsApplied.length; i++) {
+        if (job.applicantsApplied[i].id === req.user.id) {
+            return next(new ErrorHandler('You have already applied for this job.', 400))
+        }
+    }
+
+    //  // Check if user has applied  to this job before
+    //  job = await Job.find({'applicantsApplied.id' : req.user.id}).select('+applicantsApplied');
+    //  console.log(`Job is : ${job}`);
+    //          if(job) {
+    //              return next(new ErrorHandler('You have already applied for this job!', 400));
+    //          }
+
+
     // Check for files
     if(!req.files) {
         return next(new ErrorHandler('Please upload Resume to apply for job.', 400));
     }
+    
 
     const file = req.files.file;
 
+
+
     if(!file) {
-        return next(new ErrorHandler(`Something went wrong the file is: ${file}`));
+        return next(new ErrorHandler(`Something went wrong the file is: ${req.files.file}`));
+       
     }
     // Check file type
-    const supportedFiles = /.docx | .pdf/;
+    const supportedFiles = /.docx|.pdf/;
     if(!supportedFiles.test(path.extname(file.name))){
+        
         return next(new ErrorHandler('Please upload Resume in file format of docx or pdf',400));
 
     }
@@ -209,11 +234,11 @@ exports.applyJob = catchAsyncErrors( async(req, res, next) => {
     file.name = `${req.user.name.replace(' ', '_')}_${job._id}${path.parse(file.name).ext}`;
 
 
-file.mv(`${prcess.env.UPLOAD_PATH}/${file.name}`, async err => {
+file.mv(`${process.env.UPLOAD_PATH}/${file.name}`, async err => {
     if(err) {
 
     
-    console.log(err);
+    
     return next(new ErrorHandler('Resume upload failed',500));
 }
 

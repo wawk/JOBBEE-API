@@ -113,14 +113,14 @@ const jobSchema = new mongoose.Schema({
     },
     lastDate : {
         type : Date,
-        default : new Date().setDate(new Date().getDate() + 7)
+        default : new Date().setDate(new Date().getDate() + 21)
     },
     applicantsApplied : {
         type : [Object],
         select : false
     },
     user : {
-        type: mongoose.Schema.ObjectId,
+        type : mongoose.Schema.ObjectId,
         ref : 'User',
         required : true
     }
