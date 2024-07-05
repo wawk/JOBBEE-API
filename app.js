@@ -1,7 +1,11 @@
 const express = require('express');
-const multer = require('multer');
-
 const app = express();
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const { xss} = require('express-xss-sanitizer');
+const hpp = require('hpp');
+const cors = require('cors');
 
 const cookieParser = require('cookie-parser');
 const fileUpload = require('express-fileupload');
@@ -25,18 +29,43 @@ process.on('uncaughtException', err => {
 //connecting to database
 connectDatabase();
 
+
+
+//Setup security headers
+app.use(helmet());
+
 //Setting up body parser
 app.use(express.json());
 
+// Prevent XSS attacks
+app.use(xss());
 
+// Prevent parameter polution
+app.use(hpp());
 
 // Handle file uploads
 app.use(fileUpload());
 
+
+
+
 // Set cookie parser
 app.use(cookieParser());
 
+// Santize Mongo data
+app.use(mongoSanitize());
 
+
+// Rate limiting
+const limiter = rateLimit({
+    windowMs: 10*60*1000, //10 Minutes
+    max : 100
+
+});
+app.use(limiter);
+
+// Setup CORS - Accessible by other domains
+app.use(cors());
 
 
 // Importing all routes
@@ -56,7 +85,7 @@ app.use('/api/v1', user);
 
 
 // Handle unhandled routes
-app.all('*', (req,res, next) => {
+app.all('*', (req, res, next) => {
 next(new errorHandler(`${req.originalUrl} route not found`, 404));
 
 });

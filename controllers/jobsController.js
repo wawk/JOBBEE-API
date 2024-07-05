@@ -100,6 +100,7 @@ exports.deleteJob = catchAsyncErrors(async (req, res, next) => {
     }
 
     // Deleting files associated with job
+   
 
     for (let i = 0; i < job.applicantsApplied.length; i++) {
         let filepath = `${__dirname}/public/uploads/${job.applicantsApplied[i].resume}`.replace('\\controllers', '');
@@ -172,7 +173,8 @@ exports.jobStats = catchAsyncErrors(async (req, res, next) => {
 // Apply to job using Resume => /api/v1/job/:id/apply
 exports.applyJob = catchAsyncErrors( async(req, res, next) => {
 
-    let job = await Job.findById(req.params.id);
+    // let job = await Job.findById(req.params.id);
+    let job = await Job.findById(req.params.id).select('+applicantsApplied');
 
     if(!job) {
         return next(new ErrorHandler('Job not found',404));
@@ -187,20 +189,11 @@ exports.applyJob = catchAsyncErrors( async(req, res, next) => {
     }
 
     // Check if user has applied before
-    console.log(job.applicantsApplied);
-    
     for (let i = 0; i < job.applicantsApplied.length; i++) {
         if (job.applicantsApplied[i].id === req.user.id) {
             return next(new ErrorHandler('You have already applied for this job.', 400))
         }
     }
-
-    //  // Check if user has applied  to this job before
-    //  job = await Job.find({'applicantsApplied.id' : req.user.id}).select('+applicantsApplied');
-    //  console.log(`Job is : ${job}`);
-    //          if(job) {
-    //              return next(new ErrorHandler('You have already applied for this job!', 400));
-    //          }
 
 
     // Check for files
@@ -242,19 +235,18 @@ file.mv(`${process.env.UPLOAD_PATH}/${file.name}`, async err => {
     return next(new ErrorHandler('Resume upload failed',500));
 }
 
-await Job.findByIdAndUpdate(req.params.id, {$push : {
-    applicantsApplied : {
-        id : req.user.id,
-        resume : file.name
-
-
+await Job.findByIdAndUpdate(req.params.id, {
+    $push: {
+        applicantsApplied: {
+            id: req.user.id,
+            resume: file.name
+        }
     }
-}}, 
-{
-    new : true,
-    runValidators : true,
+    
+}, {
+    new: true,
+    runValidators: true,
     useFindAndModify: false
-
 });
 
 res.status(200).json({
